@@ -8,41 +8,40 @@ Created on Sat Mar 19 20:14:16 2022
 from pylab import *
 from numpy import *
 
-""" Ejercicio 1 """
+""" Exercise 1 """
 
-print('----- Ejercicio 1 ---------\n')
+print('----- Exercise 1 ---------\n')
 
-""" En primer lugar recogemos las distintas constantes que aparecen en el problema"""
+""" Firstly, we remind the constants of the problem"""
 
-g = 9.81 # Constante gravitatoria
-c = 0.2 # Coeficiente adimensional de arrastre 
-p = 1.29 # Densidad del aire
-s = 0.25 # Área media de la sección tranversal del cohete
-M = 7.5 # Masa del cohete (sin contar la masa del combustible)
-k = 0.01 # Constante de proporcionalidad consumo de combustible/empuje
-T0 = 50 # Fuerza de empuje del cohete
+g = 9.81 # Gravitational constant
+c = 0.2 # Dimensionless drag coefficient
+p = 1.29 # Air density
+s = 0.25 # Mean cross-sectional area of ​​the rocket
+M = 7.5 # Mass of the rocket (not counting the mass of the fuel)
+k = 0.01 # Constant of proportionality fuel consumption/thrust
+T0 = 50 # Rocket thrust force
 
 
-v0 = 50 # Velocidad inicial
-o0 = pi/4 # Ángulo inicial
-m0 = 7.5 # Masa inicial de fuel
+v0 = 50 # Initial speed
+o0 = pi/4 # Initial angle
+m0 = 7.5 # Initial mass of the fuel
 
-def T(m,T0): # Función que representa la fuerza que ejerce el motor del cohete
+def T(m,T0): # Function representing thrust force of the rocket
     if m > 0:
         return T0
     else:
         return 0
 
-""" Función que resuelve, aplicando el método RK4, el problema de Cauchy de la evolución de un cohete con motor.
- Toma como entrada una serie de parámetros correspondientes a las condiciones del problema, haciendo posible su 
- implementación de forma general.
+""" Function that solves, applying the RK4 method, the Cauchy problem of the evolution of a rocket with an engine.
+ It takes as input a series of parameters corresponding to the conditions of the problem, making it possible to
+ general implementation.
 
- Ante el reto de no saber el extremo superior del intervalo en el que se desea resolver el problema, diseñamos un algoritmo
- que realiza iteraciones del método de Runge-Kutta 4 hasta que se cumple una condición de parada"""
+ Faced with the challenge of not knowing the upper end of the interval in which we want to solve the problem, we design an algorithm
+ which iterates the Runge-Kutta 4 method until a stop condition is met"""
 
-
-def modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T): 
-    def f(t,z): # Función que define el sistema diferencial
+def rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T): 
+    def f(t,z): # Function that defines the differential system
         (x,y,v,o,m) = z
         f1 = v*cos(o)
         f2 = v * sin(o)
@@ -51,232 +50,231 @@ def modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T):
         f5 = -k*T(m,T0)
         return array([f1,f2,f3,f4,f5])
     
-    a = 0 # Extremo inferior del intervalo (correspondiente al tiempo)
-    h = 0.01 # Paso de malla (fijo inicialmente)
-    z0 = array([0,0,v0,o0,m0]) # valores iniciales del problema
+    a = 0 # Lower extreme of the interval (corresponding to time)
+    h = 0.01 # Mesh pitch (initially fixed)
+    z0 = array([0,0,v0,o0,m0]) # initial values of the problem
     
-    t = zeros(1) # Creamos arrays de zeros que iniciarán el algoritmo
+    t = zeros(1) # zero array that will start the algorithm
     z = zeros((5,2)) 
     z[:,0]= z0
-    i = 1 # Contador de las iteraciones
+    i = 1 # Iteration counter
     
-    """ La razón de crear z como un array de dos columnas, en vez de una única columna formada por los valores iniciales,
-    es la comodidad que nos brinda a la hora de aplicar el método de Runge-Kutta 4 de forma general, sin un caso inicial
-    para trabajar con un array de una sola columna con índice único. La existencia de la columna extra
-    se subsanará más tarde de forma muy simple 
-    """
+    """ The reason for creating z as a two-column array, instead of a single column made up of the initial values,
+    is the convenience that it gives us when applying the Runge-Kutta 4 method in a general way, without an initial case
+    to work with a single-column array with unique index. The existence of the extra column
+    it will be corrected later in a very simple way"""
 
-    while z[1,i-1] > 0 or i==1: # Bucle que se repetirá mientras la coordenada y sea positiva(Añadimos además la condición i==1 para que se produzca la primera iteración)
-        # Se calculan los coeficientes del método rk4
+    while z[1,i-1] > 0 or i==1 : # Loop that will repeat as long as the y coordinate is positive (we also add the condition i==1 so that the first iteration occurs)
+    # The coefficients of the rk4 method are calculated
         k1 = f(t[i-1],z[:,i-1]) 
         k2 = f(t[i-1]+h/2,z[:,i-1]+k1*h/2)
         k3 = f(t[i-1]+h/2,z[:,i-1]+k2*h/2)
         k4 = f(t[i-1]+h,z[:,i-1]+h*k3)
         
-        # Se crean nuevos arrays auxiliares vacíos para ampliar t y z con los valores calculados en la iteración del método rk4
+        # Create new empty helper arrays to extend t and z with the values ​​computed in the iteration of the rk4 method
         zi = zeros((5,i+1))
         ti= zeros(i+1)
         ti[:i]= t
         ti[i] = t[i-1]+h
         
-        # Si no estamos en la primera iteración (i>1), se rellena zi de forma intuitiva, añadiendo el valor obtenido en la iteración del método numérico
+        # If we are not in the first iteration (i>1), zi is filled in intuitively, adding the value obtained in the iteration of the numerical method
         if i > 1:
             zi[:,:i] = z
             
             zi[:,i] = zi[:,i-1]+ (h/6) * (k1+2*k2+2*k3+k4)
            
-        # En la primera iteración, nos deshacemos de la columna extra de z mencionada anteriormente
+        # In the first iteration, we get rid of the extra column of z mentioned above
         else:
             zi[:,0] = z[:,0]
             zi[:,i] = zi[:,i-1]+ (h/6) * (k1+2*k2+2*k3+k4)
         
-        """ Para otorgar al algoritmo de mayor precisión respecto al punto de impacto del cohete, añadimos unas condiciones extras:
-        Si en la iteración actual se obtiene un valor negativo de la coordenada "y", y en la iteración anterior 
-        se obtuvo un valor que dinsta del suelo más de un 1mm, la iteración actual no vale, es decir, no se modificará la 
-        solución y se seguirá iterando con un paso de malla correspondiente a la mitad del anterior
+        """ To give the algorithm more precision regarding the point of impact of the rocket, we add some extra conditions:
+        If in the current iteration a negative value of the "y" coordinate is obtained, and in the previous iteration
+        a value was obtained that differs from the ground by more than 1mm, the current iteration is not valid, that is, the
+        solution and it will continue iterating with a mesh step corresponding to half of the previous
         
-        Así, nos aseguramos que el último punto de nuestra solución es, de forma bastante aproximada, un punto del suelo"""
+        Thus, we make sure that the last point of our solution is, quite approximately, a point on the ground"""
         
         if zi[1,i] < 0 and zi[1,i-1]>0.001:
             h = h/2
         
-        # Si no se verifican las condiciones anteriores, se modifica la solución con el valor obtenido en esta iteración
+        # If the previous conditions are not verified, the solution is modified with the value obtained in this iteration
         else:
             z = zi
             t = ti
             i += 1
         
-    return (t[:i-1], z[:,:i-1])  # La función devuelve un array formado por t y z, donde z es un array correspondiente a (x,y,v,o,m)
+    return (t[:i-1], z[:,:i-1]) # The function returns an array consisting of t and z, where z is an array corresponding to (x,y,v,o,m)
     
-# Nótese que la solución no incluye la última columna, pues esta no verifica las condiciones que se pedían en el bucle While (En particular, la coordenada "y" es negativa)
+# Note that the solution does not include the last column, since it does not check the conditions that were requested in the While loop (In particular, the "y" coordinate is negative)
 
-ymax = max(modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)[1][1,:]) # Altura máxima
-alcance = max(modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)[1][0,:]) # Alcance del cohete
-print('La altura máxima del cohete es:',round(ymax,3), 'metros')
-print('El alcance del cohete es:',round(alcance,3), 'metros')
+ymax = max(rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)[1][1,:]) # Maximum height
+alcance = max(rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)[1][0,:]) # Rocket scope
+print('Maximum height of the rocket is:',round(ymax,3), 'metres')
+print('The scope of the rocket is:',round(alcance,3), 'metr')
 
-(t,z) = modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)
+(t,z) = rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)
 
-# Dibujamos las gráficas de la velocidad y masa de fuel respecto del tiempo
+# We draw the graphs of the speed and mass of fuel with respect to time
 fig1=figure() 
 plot (t , z [2,:]) 
 grid(True)
 xlabel('t (s)')
 ylabel('v (m/s)')
-legend(['Velocidad'])
-title("Evolución de la velocidad")
+legend(['Speed'])
+title("Evolution of the speed")
 
 fig11 = figure()
 plot(t , z [4 ,:])
 grid(True)
 xlabel('t (s)')
 ylabel('m (kg)')
-legend(['Masa de fuel'])
-title("Evolución de la masa de fuel")
+legend(['Mass of the fuel'])
+title("Evolution of the mass of the fuel")
 
 fig2=figure()
-plot ( z [0 ,:] , z [1 ,:]) # Dibujamos la trayectoria del cohete con motor
+plot ( z [0 ,:] , z [1 ,:]) # We draw the trajectory of the rocket with engine
 grid(True)
 xlabel('x')
 ylabel('y')
-title("Ejercicio 1: Trayectoria")
-legend([' trayectoria '])
+title("Exercise 1: Trajectory")
+legend(['Trajectory'])
 
-""" Ejercicio 2 """
+""" Exercise 2 """
 
-print('\n----- Ejercicio 2 ---------\n')
+print('\n----- Exercise 2 ---------\n')
 
-# Apartado a)
+# Item a)
 T0 = 0 
 c= 0
-(t1,z1) = modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)
+(t1,z1) = rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)
 
-print('Apartado a)\n')
+print('Item a)\n')
 ymax1 = max(z1[1,:])
 alcance1 = max(z1[0,:])
-print('La altura máxima del cohete es:',round(ymax1,3), 'metros')
-print('El alcance del cohete es:',round(alcance1,3), 'metros')
+print('Maximum height of the rocket is:',round(ymax1,3), 'metres')
+print('The scope of the rocket is:',round(alcance1,3), 'metres')
 
-# Apartado b)
+# Item b)
 T0 = 0
 c= 0.2
-(t2,z2) = modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)
+(t2,z2) = rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)
 
-print('\nApartado b)\n')
+print('\n Item b)\n')
 ymax2 = max(z2[1,:])
 alcance2 = max(z2[0,:])
-print('La altura máxima del cohete es:',round(ymax2,3), 'metros')
-print('El alcance del cohete es:',round(alcance2,3), 'metros')
+print('Maximum height of the rocket is:',round(ymax2,3), 'metres')
+print('The scope of the rocket is:',round(alcance2,3), 'metres')
 
-# Apartado c)
+# Item c)
 T0 = 10
 c= 0.2
-(t3,z3) = modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)
+(t3,z3) = rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)
 
-print('\nApartado c)\n')
+print('\n Item c)\n')
 ymax3 = max(z3[1,:])
 alcance3 = max(z3[0,:])
-print('La altura máxima del cohete es:',round(ymax3,3), 'metros')
-print('El alcance del cohete es:',round(alcance3,3), 'metros')
+print('Maximum height of the rocket is:',round(ymax3,3), 'metres')
+print('The scope of the rocket is:',round(alcance3,3), 'metres')
 
-# Apartado d)
+# Item d)
 T0 = 50
 c= 0
-(t4,z4) = modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)
+(t4,z4) = rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)
 
-print('\nApartado d)\n')
+print('\n Item d)\n')
 ymax4 = max(z4[1,:])
 alcance4 = max(z4[0,:])
-print('La altura máxima del cohete es:',round(ymax4,3), 'metros')
-print('El alcance del cohete es:',round(alcance4,3), 'metros')
+print('Maximum height of the rocket is:',round(ymax4,3), 'metres')
+print('The scope of the rocket is:',round(alcance4,3), 'metres')
 
-# Apartado e)
-# La solución de este apartado coincide con la del ejercicio 1
-print('\nApartado e)\n')
+# Item e)
+# The solution of this section coincides with that of exercise 1
+print('\n Item e)\n')
 ymax = max(z[1,:]) 
 alcance = max(z[0,:]) 
-print('La altura máxima del cohete es:',round(ymax,3), 'metros')
-print('El alcance del cohete es:',round(alcance,3), 'metros')
+print('Maximum height of the rocket is:',round(ymax,3), 'metres')
+print('The scope of the rocket is:',round(alcance,3), 'metres')
 
-fig3=figure() # Comparamos las trayectorias en una misma gráfica
+fig3=figure() # We compare the trajectories in the same graph
 
 plot (z1[0,:] , z1 [1 ,:], z2[0,:] , z2 [1 ,:], z3[0,:] , z3 [1 ,:],z4[0,:], z4 [1 ,:], z[0,:] , z[1 ,:])
 grid(True)
 xlabel('x')
 ylabel('y')
-title("Ejercicio 2: Trayectorias")
-legend(['Trayectoria A', 'Trayectoria B','Trayectoria C','Trayectoria D','Trayectoria E'])
+title("Exercise 2: Trajectories")
+legend(['Trajectory A', 'Trajectory B','Trajectory C','Trajectory D','Trajectory E'])
     
 
-""" Ejercicio 3 """
+""" Exercise 3 """
 
-print('\n----- Ejercicio 3 ---------\n')
+print('\n----- Exercise 3 ---------\n')
 
 o0 = pi/2.1
 
-# Apartado a)
+# Item a)
 T0 = 0
 c= 0
-(t1,z1) = modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)
+(t1,z1) = rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)
 
-print('Apartado a)\n')
+print('Item a)\n')
 ymax1 = max(z1[1,:])
 alcance1 = max(z1[0,:])
-print('La altura máxima del cohete es:',round(ymax1,3), 'metros')
-print('El alcance del cohete es:',round(alcance1,3), 'metros')
+print('Maximum height of the rocket is:',round(ymax1,3), 'metres')
+print('The scope of the rocket is:',round(alcance1,3), 'metres')
 
-# Apartado b)
+# Item b)
 T0 = 0
 c= 0.2
-(t2,z2) = modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)
+(t2,z2) = rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)
 
-print('\nApartado b)\n')
+print('\nItem b)\n')
 ymax2 = max(z2[1,:])
 alcance2 = max(z2[0,:])
-print('La altura máxima del cohete es:',round(ymax2,3), 'metros')
-print('El alcance del cohete es:',round(alcance2,3), 'metros')
+print('Maximum height of the rocket is:',round(ymax2,3), 'metres')
+print('The scope of the rocket is:',round(alcance2,3), 'metres')
 
-# Apartado c)
+# Item c)
 T0 = 10
 c= 0.2
-(t3,z3) = modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)
+(t3,z3) = rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)
 
-print('\nApartado c)\n')
+print('\nItem c)\n')
 ymax3 = max(z3[1,:])
 alcance3 = max(z3[0,:])
-print('La altura máxima del cohete es:',round(ymax3,3), 'metros')
-print('El alcance del cohete es:',round(alcance3,3), 'metros')
+print('Maximum height of the rocket is:',round(ymax3,3), 'metres')
+print('The scope of the rocket is:',round(alcance3,3), 'metres')
 
-# Apartado d)
+# Item d)
 T0 = 50
 c= 0
-(t4,z4) = modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)
+(t4,z4) = rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)
 
-print('\nApartado d)\n')
+print('\nItem d)\n')
 ymax4 = max(z4[1,:])
 alcance4 = max(z4[0,:])
-print('La altura máxima del cohete es:',round(ymax4,3), 'metros')
-print('El alcance del cohete es:',round(alcance4,3), 'metros')
+print('Maximum height of the rocket is:',round(ymax4,3), 'metres')
+print('The scope of the rocket is:',round(alcance4,3), 'metres')
 
-# Apartado e)
+# Item e)
 T0 = 50
 c= 0.2
-(t5,z5) = modelo_cohete(v0, o0, m0, M, c, p, k, s, g, T0, T)
+(t5,z5) = rocket_model(v0, o0, m0, M, c, p, k, s, g, T0, T)
 
-print('\nApartado e)\n')
+print('\nItem e)\n')
 ymax5 = max(z5[1,:])
 alcance5 = max(z5[0,:])
-print('La altura máxima del cohete es:',round(ymax5,3), 'metros')
-print('El alcance del cohete es:',round(alcance5,3), 'metros')
+print('Maximum height of the rocket is:',round(ymax5,3), 'metres')
+print('The scope of the rocket is:',round(alcance5,3), 'metres')
 
 
-fig4=figure() # Comparamos las trayectorias en una misma gráfica
+fig4=figure() # We compare the trajectories in the same graph
 plot (z1[0,:] , z1 [1 ,:], z2[0,:] , z2 [1 ,:], z3[0,:] , z3 [1 ,:],z4[0,:], z4 [1 ,:],z5[0,:], z5[1 ,:])
 xlabel('x')
 ylabel('y')
-title("Ejercicio 3: Trayectorias")
+title("Exercise 3: Trayectories")
 grid(True)
-legend(['Trayectoria A', 'Trayectoria B','Trayectoria C','Trayectoria D','Trayectoria E' ])
+legend(['Trayectory A', 'Trayectory B','Trayectory C','Trayectory D','Trayectory E' ])
 
 
 
