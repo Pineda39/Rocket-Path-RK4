@@ -11,15 +11,6 @@ Features:
 - Graph of the height and scope of the rocket.
 - Comparison of the trajectories of some rockets modifying air density and initial angle.
 
-
-## 📍 Table of Contents
-- [Technologies Used](https://github.com/LaloVene/react-certification-2021#-technologies-used)
-- [CI/CD](https://github.com/LaloVene/MLH-PE-Project#-cicd)
-- [Site Overview](https://github.com/LaloVene/MLH-PE-Project#-site-overview)
-- [Usage](https://github.com/LaloVene/MLH-PE-Project#-usage)
-- [Contributing](https://github.com/LaloVene/MLH-PE-Project#-contributing)
-
-
 ## 💻 Technologies Used
 - Python (3.8)
 
